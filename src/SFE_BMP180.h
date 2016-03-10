@@ -32,8 +32,10 @@ class SFE_BMP180
 		SFE_BMP180(); // base type
 
 		char begin();
+		char begin(int sda, int slc);
 			// call pressure.begin() to initialize BMP180 before use
 			// returns 1 if success, 0 if failure (bad component or I2C bus shorted?)
+			// The pin used for I2C can be configured with sda and scl
 		
 		char startTemperature(void);
 			// command BMP180 to start a temperature measurement
@@ -77,6 +79,8 @@ class SFE_BMP180
 			// 4 = Other error
 
 	private:
+		char initCalibration();
+		// Load calibration data from the device
 	
 		char readInt(char address, int16_t &value);
 			// read an signed int (16 bits) from a BMP180 register
