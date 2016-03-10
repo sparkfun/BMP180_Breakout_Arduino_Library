@@ -32,11 +32,24 @@ SFE_BMP180::SFE_BMP180()
 char SFE_BMP180::begin()
 // Initialize library for subsequent pressure measurements
 {
-	double c3,c4,b1;
-	
 	// Start up the Arduino's "wire" (I2C) library:
-	
 	Wire.begin();
+	return initCalibration();
+}
+
+char SFE_BMP180::begin(int sda, int slc)
+// Initialize library for subsequent pressure measurements
+// sda, slc : i2c pin used
+{
+	// Start up the Arduino's "wire" (I2C) library:
+	Wire.begin(sda, slc);
+	return initCalibration();
+}
+
+char SFE_BMP180::initCalibration()
+// Load calibration data from the device
+{
+	double c3,c4,b1;
 
 	// The BMP180 includes factory calibration data stored on the device.
 	// Each device has different numbers, these must be retrieved and
