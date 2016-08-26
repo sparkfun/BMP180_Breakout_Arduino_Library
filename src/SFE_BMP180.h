@@ -78,25 +78,25 @@ class SFE_BMP180
 
 	private:
 	
-		char readInt(char address, int16_t &value);
+		char readInt(uint8_t address, int16_t &value);
 			// read an signed int (16 bits) from a BMP180 register
 			// address: BMP180 register address
 			// value: external signed int for returned value (16 bits)
 			// returns 1 for success, 0 for fail, with result in value
 
-		char readUInt(char address, uint16_t &value);
+		char readUInt(uint8_t address, uint16_t &value);
 			// read an unsigned int (16 bits) from a BMP180 register
 			// address: BMP180 register address
 			// value: external unsigned int for returned value (16 bits)
 			// returns 1 for success, 0 for fail, with result in value
 
-		char readBytes(unsigned char *values, char length);
+		char readBytes(uint8_t *values, uint8_t length);
 			// read a number of bytes from a BMP180 register
 			// values: array of char with register address in first location [0]
 			// length: number of bytes to read back
 			// returns 1 for success, 0 for fail, with read bytes in values[] array
 			
-		char writeBytes(unsigned char *values, char length);
+		char writeBytes(uint8_t *values, uint8_t length);
 			// write a number of bytes to a BMP180 register (and consecutive subsequent registers)
 			// values: array of char with register address in first location [0]
 			// length: number of bytes to write
@@ -107,16 +107,5 @@ class SFE_BMP180
 		double c5,c6,mc,md,x0,x1,x2,y0,y1,y2,p0,p1,p2;
 		char _error;
 };
-
-#define BMP180_ADDR 0x77 // 7-bit address
-
-#define	BMP180_REG_CONTROL 0xF4
-#define	BMP180_REG_RESULT 0xF6
-
-#define	BMP180_COMMAND_TEMPERATURE 0x2E
-#define	BMP180_COMMAND_PRESSURE0 0x34
-#define	BMP180_COMMAND_PRESSURE1 0x74
-#define	BMP180_COMMAND_PRESSURE2 0xB4
-#define	BMP180_COMMAND_PRESSURE3 0xF4
 
 #endif
