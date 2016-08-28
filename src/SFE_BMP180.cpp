@@ -34,6 +34,8 @@ namespace {
 	const uint8_t BMP180_COMMAND_PRESSURE1 = 0x74;
 	const uint8_t BMP180_COMMAND_PRESSURE2 = 0xB4;
 	const uint8_t BMP180_COMMAND_PRESSURE3 = 0xF4;
+
+	const uint8_t BMP180_ERROR_OTHER = 4;
 }
 
 
@@ -193,18 +195,29 @@ char SFE_BMP180::readBytes(uint8_t *values, uint8_t length)
 {
 	Wire.beginTransmission(BMP180_ADDR);
 	Wire.write(values[0]);
+
 	_error = Wire.endTransmission();
-	if (_error == 0)
+	if (_error)
+		return(0);
+
+	if (Wire.requestFrom(BMP180_ADDR, length) != length)
 	{
-		Wire.requestFrom(BMP180_ADDR,length);
-		while(Wire.available() != length) ; // wait until bytes are ready
-		for(uint8_t x = 0; x < length; x++)
-		{
-			values[x] = Wire.read();
-		}
-		return(1);
+		_error = BMP180_ERROR_OTHER;
+		return(0);
 	}
-	return(0);
+
+	for(uint8_t i = 0; i < length; i++)
+	{
+		int data = Wire.read();
+		if (data == -1)
+		{
+			_error = BMP180_ERROR_OTHER;
+			return(0);
+		}
+		values[i] = data;
+	}
+
+	return(1);
 }
 
 
