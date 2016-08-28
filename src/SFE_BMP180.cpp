@@ -23,6 +23,22 @@
 #include <math.h>
 
 
+namespace {
+	const uint8_t BMP180_ADDR = 0x77; // 7-bit address
+
+	const uint8_t BMP180_REG_CONTROL = 0xF4;
+	const uint8_t BMP180_REG_RESULT = 0xF6;
+
+	const uint8_t BMP180_COMMAND_TEMPERATURE = 0x2E;
+	const uint8_t BMP180_COMMAND_PRESSURE0 = 0x34;
+	const uint8_t BMP180_COMMAND_PRESSURE1 = 0x74;
+	const uint8_t BMP180_COMMAND_PRESSURE2 = 0xB4;
+	const uint8_t BMP180_COMMAND_PRESSURE3 = 0xF4;
+
+	const uint8_t BMP180_ERROR_OTHER = 4;
+}
+
+
 SFE_BMP180::SFE_BMP180()
 // Base library type
 {
@@ -135,12 +151,12 @@ char SFE_BMP180::begin()
 }
 
 
-char SFE_BMP180::readInt(char address, int16_t &value)
+char SFE_BMP180::readInt(uint8_t address, int16_t &value)
 // Read a signed integer (two bytes) from device
 // address: register to start reading (plus subsequent register)
 // value: external variable to store data (function modifies value)
 {
-	unsigned char data[2];
+	uint8_t data[2];
 
 	data[0] = address;
 	if (readBytes(data,2))
@@ -154,12 +170,12 @@ char SFE_BMP180::readInt(char address, int16_t &value)
 }
 
 
-char SFE_BMP180::readUInt(char address, uint16_t &value)
+char SFE_BMP180::readUInt(uint8_t address, uint16_t &value)
 // Read an unsigned integer (two bytes) from device
 // address: register to start reading (plus subsequent register)
 // value: external variable to store data (function modifies value)
 {
-	unsigned char data[2];
+	uint8_t data[2];
 
 	data[0] = address;
 	if (readBytes(data,2))
@@ -172,37 +188,44 @@ char SFE_BMP180::readUInt(char address, uint16_t &value)
 }
 
 
-char SFE_BMP180::readBytes(unsigned char *values, char length)
+char SFE_BMP180::readBytes(uint8_t *values, uint8_t length)
 // Read an array of bytes from device
 // values: external array to hold data. Put starting register in values[0].
 // length: number of bytes to read
 {
-	char x;
-
 	Wire.beginTransmission(BMP180_ADDR);
 	Wire.write(values[0]);
+
 	_error = Wire.endTransmission();
-	if (_error == 0)
+	if (_error)
+		return(0);
+
+	if (Wire.requestFrom(BMP180_ADDR, length) != length)
 	{
-		Wire.requestFrom(BMP180_ADDR,length);
-		while(Wire.available() != length) ; // wait until bytes are ready
-		for(x=0;x<length;x++)
-		{
-			values[x] = Wire.read();
-		}
-		return(1);
+		_error = BMP180_ERROR_OTHER;
+		return(0);
 	}
-	return(0);
+
+	for(uint8_t i = 0; i < length; i++)
+	{
+		int data = Wire.read();
+		if (data == -1)
+		{
+			_error = BMP180_ERROR_OTHER;
+			return(0);
+		}
+		values[i] = data;
+	}
+
+	return(1);
 }
 
 
-char SFE_BMP180::writeBytes(unsigned char *values, char length)
+char SFE_BMP180::writeBytes(uint8_t *values, uint8_t length)
 // Write an array of bytes to device
 // values: external array of data to write. Put starting register in values[0].
 // length: number of bytes to write
 {
-	char x;
-	
 	Wire.beginTransmission(BMP180_ADDR);
 	Wire.write(values,length);
 	_error = Wire.endTransmission();
@@ -217,7 +240,7 @@ char SFE_BMP180::startTemperature(void)
 // Begin a temperature reading.
 // Will return delay in ms to wait, or 0 if I2C error
 {
-	unsigned char data[2], result;
+	uint8_t data[2], result;
 	
 	data[0] = BMP180_REG_CONTROL;
 	data[1] = BMP180_COMMAND_TEMPERATURE;
@@ -236,7 +259,7 @@ char SFE_BMP180::getTemperature(double &T)
 // T: external variable to hold result.
 // Returns 1 if successful, 0 if I2C error.
 {
-	unsigned char data[2];
+	uint8_t data[2];
 	char result;
 	double tu, a;
 	
@@ -272,7 +295,7 @@ char SFE_BMP180::startPressure(char oversampling)
 // Oversampling: 0 to 3, higher numbers are slower, higher-res outputs.
 // Will return delay in ms to wait, or 0 if I2C error.
 {
-	unsigned char data[2], result, delay;
+	uint8_t data[2], result, delay;
 	
 	data[0] = BMP180_REG_CONTROL;
 
@@ -319,7 +342,7 @@ char SFE_BMP180::getPressure(double &P, double &T)
 
 // Note that calculated pressure value is absolute mbars, to compensate for altitude call sealevel().
 {
-	unsigned char data[3];
+	uint8_t data[3];
 	char result;
 	double pu,s,x,y,z;
 	
